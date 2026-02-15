@@ -9,30 +9,41 @@
             font-family: Arial, sans-serif;
             background: linear-gradient(to right, #ff4e50, #f9d423);
             text-align: center;
-            margin-top: 50px;
+            margin: 0;
+            padding-top: 40px;
         }
 
         .container {
             background: white;
-            padding: 30px;
-            width: 320px;
+            padding: 25px;
+            width: 90%;
+            max-width: 350px;
             margin: auto;
-            border-radius: 10px;
-            box-shadow: 0px 5px 15px rgba(0,0,0,0.2);
+            border-radius: 15px;
+            box-shadow: 0px 5px 20px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            margin-bottom: 20px;
         }
 
         input {
-            width: 90%;
-            padding: 10px;
+            width: 95%;
+            padding: 12px;
             margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
         }
 
         .saveBtn {
-            background: green;
+            background: #28a745;
             color: white;
-            padding: 10px;
+            padding: 12px;
             border: none;
             width: 100%;
+            border-radius: 8px;
+            font-size: 16px;
             cursor: pointer;
         }
 
@@ -56,80 +67,91 @@
         #status {
             margin-top: 15px;
             font-weight: bold;
+            min-height: 20px;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="container">
-        <h1>🚨 College SOS System</h1>
+<div class="container">
+    <h1>🚨 College SOS System</h1>
 
-        <input type="text" id="contactNumber" placeholder="Enter Emergency Contact Number">
-        <input type="text" id="policeNumber" placeholder="Enter Police Number">
+    <input type="tel" id="contactNumber" placeholder="Enter Emergency Contact Number">
+    <input type="tel" id="policeNumber" placeholder="Enter Police Number">
 
-        <button class="saveBtn" onclick="saveNumbers()">Save Numbers</button>
+    <button class="saveBtn" onclick="saveNumbers()">Save Numbers</button>
 
-        <button class="sosBtn" onclick="triggerSOS()">SOS</button>
+    <button class="sosBtn" onclick="triggerSOS()">SOS</button>
 
-        <p id="status"></p>
-    </div>
+    <p id="status"></p>
+</div>
 
-    <script>
-        function saveNumbers() {
-            const contact = document.getElementById("contactNumber").value;
-            const police = document.getElementById("policeNumber").value;
+<script>
 
-            if(contact === "" || police === "") {
-                alert("Please enter both numbers!");
-                return;
-            }
+function saveNumbers() {
+    const contact = document.getElementById("contactNumber").value;
+    const police = document.getElementById("policeNumber").value;
 
-            localStorage.setItem("contactNumber", contact);
-            localStorage.setItem("policeNumber", police);
+    if(contact === "" || police === "") {
+        alert("Please enter both numbers!");
+        return;
+    }
 
-            alert("Numbers Saved Successfully!");
-        }
+    localStorage.setItem("contactNumber", contact);
+    localStorage.setItem("policeNumber", police);
 
-        function triggerSOS() {
-            const contact = localStorage.getItem("contactNumber");
-            const police = localStorage.getItem("policeNumber");
+    alert("Numbers Saved Successfully!");
+}
 
-            if (!contact || !police) {
-                alert("Please save numbers first!");
-                return;
-            }
+function triggerSOS() {
 
-            document.getElementById("status").innerText = "Detecting Location...";
+    const contact = localStorage.getItem("contactNumber");
+    const police = localStorage.getItem("policeNumber");
 
-            navigator.geolocation.getCurrentPosition(function(position) {
+    if (!contact || !police) {
+        alert("Please save numbers first!");
+        return;
+    }
 
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
+    document.getElementById("status").innerText = "Getting your location...";
 
-                const locationLink = `https://www.google.com/maps?q=${lat},${lon}`;
-                const message = `🚨 EMERGENCY! I need help. My location: ${locationLink}`;
+    if (!navigator.geolocation) {
+        alert("Geolocation not supported!");
+        return;
+    }
 
-                document.getElementById("status").innerText = "Sending Alert...";
+    navigator.geolocation.getCurrentPosition(function(position) {
 
-                // Open SMS App
-                window.location.href = `sms:${contact}?body=${encodeURIComponent(message)}`;
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
 
-                // Call after 2 seconds
-                setTimeout(() => {
-                    window.location.href = `tel:${contact}`;
-                }, 2000);
+        const locationLink = `https://www.google.com/maps?q=${lat},${lon}`;
+        const message = `🚨 EMERGENCY! I need help. My location: ${locationLink}`;
 
-                // Fallback to police after 15 seconds (Simulated)
-                setTimeout(() => {
-                    window.location.href = `sms:${police}?body=${encodeURIComponent("Emergency! Primary contact did not respond. Location: " + locationLink)}`;
-                }, 15000);
+        document.getElementById("status").innerText = "Calling Emergency Contact...";
 
-            }, function() {
-                alert("Location access denied!");
-            });
-        }
-    </script>
+        // 1️⃣ CALL FIRST
+        window.location.href = `tel:${contact}`;
+
+        // 2️⃣ AFTER 4 SEC SEND SMS
+        setTimeout(() => {
+            document.getElementById("status").innerText = "Sending SMS...";
+            window.location.href = `sms:${contact}?body=${encodeURIComponent(message)}`;
+        }, 4000);
+
+        // 3️⃣ AFTER 15 SEC SIMULATED POLICE ALERT
+        setTimeout(() => {
+            document.getElementById("status").innerText = "No Response! Alerting Police...";
+            window.location.href = `sms:${police}?body=${encodeURIComponent("Emergency! No response from primary contact. Location: " + locationLink)}`;
+        }, 15000);
+
+    }, function(error) {
+        alert("Location access denied! Please allow location permission.");
+    });
+}
+
+</script>
 
 </body>
 </html>
