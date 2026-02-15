@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>College SOS System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #ff4e50, #f9d423);
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            width: 320px;
+            margin: auto;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.2);
+        }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        .saveBtn {
+            background: green;
+            color: white;
+            padding: 10px;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .sosBtn {
+            background: red;
+            color: white;
+            padding: 18px;
+            border: none;
+            width: 100%;
+            font-size: 20px;
+            margin-top: 20px;
+            cursor: pointer;
+            border-radius: 50px;
+            font-weight: bold;
+        }
+
+        .sosBtn:hover {
+            background: darkred;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>🚨 College SOS System</h1>
+
+        <input type="text" id="contactNumber" placeholder="Enter Emergency Contact Number">
+        <input type="text" id="policeNumber" placeholder="Enter Police Number">
+
+        <button class="saveBtn" onclick="saveNumbers()">Save Numbers</button>
+
+        <button class="sosBtn" onclick="triggerSOS()">SOS</button>
+
+        <p id="status"></p>
+    </div>
+
+    <script>
+        function saveNumbers() {
+            const contact = document.getElementById("contactNumber").value;
+            const police = document.getElementById("policeNumber").value;
+
+            if(contact === "" || police === "") {
+                alert("Please enter both numbers!");
+                return;
+            }
+
+            localStorage.setItem("contactNumber", contact);
+            localStorage.setItem("policeNumber", police);
+
+            alert("Numbers Saved Successfully!");
+        }
+
+        function triggerSOS() {
+            const contact = localStorage.getItem("contactNumber");
+            const police = localStorage.getItem("policeNumber");
+
+            if (!contact || !police) {
+                alert("Please save numbers first!");
+                return;
+            }
+
+            document.getElementById("status").innerText = "Detecting Location...";
+
+            navigator.geolocation.getCurrentPosition(function(position) {
+
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+
+                const locationLink = `https://www.google.com/maps?q=${lat},${lon}`;
+                const message = `🚨 EMERGENCY! I need help. My location: ${locationLink}`;
+
+                document.getElementById("status").innerText = "Sending Alert...";
+
+                // Open SMS App
+                window.location.href = `sms:${contact}?body=${encodeURIComponent(message)}`;
+
+                // Call after 2 seconds
+                setTimeout(() => {
+                    window.location.href = `tel:${contact}`;
+                }, 2000);
+
+                // Fallback to police after 15 seconds (Simulated)
+                setTimeout(() => {
+                    window.location.href = `sms:${police}?body=${encodeURIComponent("Emergency! Primary contact did not respond. Location: " + locationLink)}`;
+                }, 15000);
+
+            }, function() {
+                alert("Location access denied!");
+            });
+        }
+    </script>
+
+</body>
+</html>
